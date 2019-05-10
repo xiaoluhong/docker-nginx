@@ -1,9 +1,9 @@
 FROM alpine:3.9
 
-ENV NGINX_VERSION 1.16.0
+ENV NGINX_VERSION 1.14.0
 
-RUN rm -rf /var/cache/apk/* && \
-    rm -rf /tmp/*
+RUN     rm -rf /var/cache/apk/* \
+    &&  rm -rf /tmp/*
 
 ENV CONFIG "\
         --prefix=/etc/nginx \
@@ -48,7 +48,7 @@ ENV CONFIG "\
         --with-compat \
         --with-file-aio \
         --with-http_v2_module \
-        --add-module=/root/tengine/modules/ngx_http_upstream_check_module \
+        --add-module=/root/nginx_upstream_check_module \
         "
 
 RUN    addgroup -S nginx \
@@ -68,12 +68,13 @@ RUN    addgroup -S nginx \
             gd-dev          \
             geoip-dev       \
 	&&	cd /root            \
-	&&  git clone https://github.com/alibaba/tengine.git \
+	&&  git clone https://github.com/yaoweibin/nginx_upstream_check_module.git \
     &&  curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
     &&  mkdir -p /usr/src \
     &&  tar -zxC /usr/src -f nginx.tar.gz \
     &&  rm -rf nginx.tar.gz \ 
     &&  cd /usr/src/nginx-$NGINX_VERSION \
+    && patch -p1 < /root/nginx_upstream_check_module/check_1.14.0+.patch \
     &&  ./configure $CONFIG --with-debug \
     &&  make -j$(getconf _NPROCESSORS_ONLN) \
     &&  mv objs/nginx objs/nginx-debug \
@@ -108,10 +109,12 @@ RUN    addgroup -S nginx \
         | sort -u \
         )" \
     &&  apk add --no-cache --virtual .nginx-rundeps $runDeps \
+    &&  mv /tmp/envsubst /usr/local/bin/ \
     &&  apk del .build-deps \
     &&  apk del .gettext \
-    &&  rm -rf /root/tengine/ \
-    &&  mv /tmp/envsubst /usr/local/bin/ \
+    &&  rm -rf /root/* \
+    &&  rm -rf /var/cache/apk/* \
+    &&  rm -rf /tmp/* \
     &&  ln -sf /dev/stdout /var/log/nginx/access.log \
     &&  ln -sf /dev/stderr /var/log/nginx/error.log
 
