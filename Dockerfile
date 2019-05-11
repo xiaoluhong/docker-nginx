@@ -48,7 +48,8 @@ ENV CONFIG "\
         --with-compat \
         --with-file-aio \
         --with-http_v2_module \
-        --add-module=/root/nginx_upstream_check_module \
+        --with-stream \
+        --add-module=/root/ngx_healthcheck_module \
         "
 
 RUN    addgroup -S nginx \
@@ -68,13 +69,13 @@ RUN    addgroup -S nginx \
             gd-dev          \
             geoip-dev       \
 	&&	cd /root            \
-	&&  git clone https://github.com/yaoweibin/nginx_upstream_check_module.git \
+	&&  git clone https://github.com/zhouchangxun/ngx_healthcheck_module.git \
     &&  curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
     &&  mkdir -p /usr/src \
     &&  tar -zxC /usr/src -f nginx.tar.gz \
     &&  rm -rf nginx.tar.gz \ 
     &&  cd /usr/src/nginx-$NGINX_VERSION \
-    && patch -p1 < /root/nginx_upstream_check_module/check_1.14.0+.patch \
+    && patch -p1 < /root/ngx_healthcheck_module/nginx_healthcheck_for_nginx_1.14+.patch \
     &&  ./configure $CONFIG --with-debug \
     &&  make -j$(getconf _NPROCESSORS_ONLN) \
     &&  mv objs/nginx objs/nginx-debug \
